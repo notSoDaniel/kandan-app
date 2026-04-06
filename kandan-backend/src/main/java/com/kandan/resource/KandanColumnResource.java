@@ -14,6 +14,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.UUID;
 
 @Path("/column")
 @Produces(MediaType.APPLICATION_JSON)
@@ -49,5 +50,39 @@ public class KandanColumnResource {
         return Response.status(Response.Status.CREATED)
                 .entity(new KandanColumnDTO(column.id, column.board.id,column.name, column.position))
                 .build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Transactional
+    public Response update(@PathParam("id")UUID id, @Valid KandanColumnCreateDTO dto){
+        KandanColumn column = kandanColumnRepository.findById(id);
+        if (column == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        Board board = boardRepository.findById(dto.boardId);
+        if (board == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        column.name = dto.name;
+        column.position = dto.position;
+        column.board = board;
+
+        return Response.ok(new KandanColumnDTO(
+                column.id,
+                column.board.id,
+                column.name,
+                column.position
+        )).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    public Response delete(@PathParam("id") UUID id){
+        return kandanColumnRepository.findByIdOptional(id)
+                .map(column -> {
+                        kandanColumnRepository.delete(column);
+                        return Response.noContent().build();
+                })
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 }
