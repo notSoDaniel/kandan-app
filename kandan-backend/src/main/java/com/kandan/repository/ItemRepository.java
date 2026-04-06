@@ -1,0 +1,11 @@
+package com.kandan.repository;
+
+import com.kandan.entity.Item;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.util.UUID;
+
+@ApplicationScoped
+public class ItemRepository implements PanacheRepositoryBase<Item, UUID> {
+}
