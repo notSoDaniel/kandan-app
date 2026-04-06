@@ -12,6 +12,9 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +31,9 @@ public class KandanColumnResource {
     BoardRepository boardRepository;
 
     @GET
-    public List<KandanColumnDTO> listAll(){
+    @Operation(summary = "Lista todas as colunas")
+    @APIResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    public List<KandanColumnDTO> listAll() {
         return kandanColumnRepository.listAll()
                 .stream()
                 .map(k -> new KandanColumnDTO(k.id, k.board.id, k.name, k.position))
@@ -37,25 +42,33 @@ public class KandanColumnResource {
 
     @POST
     @Transactional
-    public Response create(@Valid KandanColumnCreateDTO dto){
+    @Operation(summary = "Cria uma nova coluna")
+    @APIResponse(responseCode = "201", description = "Coluna criada com sucesso")
+    @APIResponse(responseCode = "400", description = "Dados inválidos")
+    @APIResponse(responseCode = "404", description = "Board não encontrado")
+    public Response create(@Valid KandanColumnCreateDTO dto) {
         KandanColumn column = new KandanColumn();
-        Board boardId = boardRepository.findById(dto.boardId);
-        if(boardId == null){
+        Board board = boardRepository.findById(dto.boardId);
+        if (board == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        column.board = boardId;
+        column.board = board;
         column.name = dto.name;
         column.position = dto.position;
         kandanColumnRepository.persist(column);
         return Response.status(Response.Status.CREATED)
-                .entity(new KandanColumnDTO(column.id, column.board.id,column.name, column.position))
+                .entity(new KandanColumnDTO(column.id, column.board.id, column.name, column.position))
                 .build();
     }
 
     @PUT
     @Path("/{id}")
     @Transactional
-    public Response update(@PathParam("id")UUID id, @Valid KandanColumnCreateDTO dto){
+    @Operation(summary = "Atualiza uma coluna")
+    @APIResponse(responseCode = "200", description = "Coluna atualizada com sucesso")
+    @APIResponse(responseCode = "404", description = "Coluna ou board não encontrado")
+    public Response update(@Parameter(description = "ID da coluna") @PathParam("id") UUID id,
+                           @Valid KandanColumnCreateDTO dto) {
         KandanColumn column = kandanColumnRepository.findById(id);
         if (column == null) return Response.status(Response.Status.NOT_FOUND).build();
 
@@ -77,11 +90,14 @@ public class KandanColumnResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    public Response delete(@PathParam("id") UUID id){
+    @Operation(summary = "Remove uma coluna")
+    @APIResponse(responseCode = "204", description = "Coluna removida com sucesso")
+    @APIResponse(responseCode = "404", description = "Coluna não encontrada")
+    public Response delete(@Parameter(description = "ID da coluna") @PathParam("id") UUID id) {
         return kandanColumnRepository.findByIdOptional(id)
                 .map(column -> {
-                        kandanColumnRepository.delete(column);
-                        return Response.noContent().build();
+                    kandanColumnRepository.delete(column);
+                    return Response.noContent().build();
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }

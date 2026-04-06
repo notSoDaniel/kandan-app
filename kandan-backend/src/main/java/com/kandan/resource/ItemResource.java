@@ -12,6 +12,9 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +31,8 @@ public class ItemResource {
     ItemRepository itemRepository;
 
     @GET
+    @Operation(summary = "Lista todos os items")
+    @APIResponse(responseCode = "200", description = "Lista retornada com sucesso")
     public List<ItemDTO> listAll() {
         return itemRepository.listAll()
                 .stream()
@@ -43,6 +48,10 @@ public class ItemResource {
 
     @POST
     @Transactional
+    @Operation(summary = "Cria um novo item")
+    @APIResponse(responseCode = "201", description = "Item criado com sucesso")
+    @APIResponse(responseCode = "400", description = "Dados inválidos")
+    @APIResponse(responseCode = "404", description = "Coluna ou item pai não encontrado")
     public Response create(@Valid ItemCreateDTO dto) {
         KandanColumn column = kandanColumnRepository.findById(dto.columnId);
         if (column == null) {
@@ -75,11 +84,16 @@ public class ItemResource {
     @PUT
     @Path("/{id}")
     @Transactional
-    public Response update(@PathParam("id")UUID id, @Valid ItemCreateDTO dto){
+    @Operation(summary = "Atualiza um item")
+    @APIResponse(responseCode = "200", description = "Item atualizado com sucesso")
+    @APIResponse(responseCode = "404", description = "Item, coluna ou item pai não encontrado")
+    public Response update(@Parameter(description = "ID do item") @PathParam("id") UUID id,
+                           @Valid ItemCreateDTO dto) {
         Item item = itemRepository.findById(id);
-        if(item == null) return Response.status(Response.Status.NOT_FOUND).build();
-        KandanColumn column = kandanColumnRepository.findById(id);
-        if(column == null) return Response.status(Response.Status.NOT_FOUND).build();
+        if (item == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        KandanColumn column = kandanColumnRepository.findById(dto.columnId);
+        if (column == null) return Response.status(Response.Status.NOT_FOUND).build();
 
         if (dto.parentId != null) {
             Item parent = itemRepository.findById(dto.parentId);
@@ -108,7 +122,10 @@ public class ItemResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    public Response delete(@PathParam("id") UUID id){
+    @Operation(summary = "Remove um item")
+    @APIResponse(responseCode = "204", description = "Item removido com sucesso")
+    @APIResponse(responseCode = "404", description = "Item não encontrado")
+    public Response delete(@Parameter(description = "ID do item") @PathParam("id") UUID id) {
         return itemRepository.findByIdOptional(id)
                 .map(item -> {
                     itemRepository.delete(item);
@@ -116,5 +133,4 @@ public class ItemResource {
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
-
 }
