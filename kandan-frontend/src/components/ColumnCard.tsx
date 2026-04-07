@@ -54,6 +54,7 @@ function ColumnCard({ column }: Props) {
                 type="text"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && createItem.mutate(title)}
                 placeholder="Novo item..."
                 className="border rounded px-2 py-1 w-full text-sm mb-2"
             />
