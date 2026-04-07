@@ -101,4 +101,15 @@ public class KandanColumnResource {
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
+
+    @GET
+    @Path("/board/{boardId}")
+    @Operation(summary = "Lista colunas por board")
+    @APIResponse(responseCode = "200", description = "Colunas retornadas com sucesso")
+    public List<KandanColumnDTO> listByBoard(@Parameter(description = "ID do board") @PathParam("boardId") UUID boardId) {
+        return kandanColumnRepository.list("board.id", boardId)
+                .stream()
+                .map(k -> new KandanColumnDTO(k.id, k.board.id, k.name, k.position))
+                .toList();
+    }
 }

@@ -133,4 +133,22 @@ public class ItemResource {
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
+
+    @GET
+    @Path("/column/{columnId}")
+    @Operation(summary = "Lista itens por coluna")
+    @APIResponse(responseCode = "200", description = "Itens retornados com sucesso")
+    public List<ItemDTO> listByColumn(@Parameter(description = "ID da coluna") @PathParam("columnId") UUID columnId) {
+        return itemRepository.list("column.id", columnId)
+                .stream()
+                .map(i -> new ItemDTO(
+                        i.id,
+                        i.column.id,
+                        i.parent != null ? i.parent.id : null,
+                        i.title,
+                        i.description,
+                        i.position,
+                        i.createdAt))
+                .toList();
+    }
 }
