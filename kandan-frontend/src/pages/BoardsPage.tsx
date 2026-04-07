@@ -41,6 +41,7 @@ function BoardsPage() {
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && createBoard.mutate(name)}
                     placeholder="Nome do board..."
                     className="border rounded px-3 py-2 w-64"
                 />

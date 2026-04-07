@@ -2,8 +2,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import api from '../lib/api'
-import { KandanColumn } from '../types'
 import ColumnCard from '../components/ColumnCard'
+import { Board, KandanColumn } from '../types'
 
 function BoardPage() {
     const { id } = useParams()
@@ -15,6 +15,14 @@ function BoardPage() {
         queryKey: ['columns', id],
         queryFn: async () => {
             const response = await api.get<KandanColumn[]>(`/column/board/${id}`)
+            return response.data
+        }
+    })
+
+    const { data: board } = useQuery({
+        queryKey: ['board', id],
+        queryFn: async () => {
+            const response = await api.get<Board>(`/boards/${id}`)
             return response.data
         }
     })
@@ -42,7 +50,7 @@ function BoardPage() {
                 <button onClick={() => navigate('/')} className="text-gray-500 hover:text-gray-800">
                     ← Voltar
                 </button>
-                <h1 className="text-2xl font-bold">Board</h1>
+                <h1 className="text-2xl font-bold">{board?.name ?? 'Carregando...'}</h1>
             </div>
 
             <div className="flex gap-4 items-start">
@@ -55,6 +63,7 @@ function BoardPage() {
                         type="text"
                         value={columnName}
                         onChange={e => setColumnName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && createColumn.mutate(columnName)}
                         placeholder="Nome da coluna..."
                         className="border rounded px-3 py-2 w-full mb-2"
                     />
