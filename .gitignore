@@ -8,3 +8,7 @@ docker-compose.override.yml
 # OS
 .DS_Store
 Thumbs.db
+
+# Vite
+kandan-frontend/.vite/
+kandan-frontend/node_modules/
