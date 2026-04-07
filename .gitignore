@@ -8,3 +8,13 @@ docker-compose.override.yml
 # OS
 .DS_Store
 Thumbs.db
+
+# Nano backups
+*.save
+*.save.*
+
+# Frontend
+kandan-frontend/.vite/
+kandan-frontend/node_modules/
+kandan-frontend/src/App.css
+kandan-frontend/src/assets/
