@@ -1,0 +1,14 @@
+# Docker
+docker-compose.override.yml
+
+# IDEs
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite
+kandan-frontend/.vite/
+kandan-frontend/node_modules/
