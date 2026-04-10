@@ -60,7 +60,7 @@ function BoardsPage() {
                 <button
                     onClick={() => createBoard.mutate(name)}
                     disabled={!name.trim() || createBoard.isPending}
-                    className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+                    className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50 cursor-pointer"
                 >
                     {createBoard.isPending ? 'Criando...' : 'Criar Board'}
                 </button>
