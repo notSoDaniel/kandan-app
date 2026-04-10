@@ -1,17 +1,18 @@
-import {useQuery, useMutation, useQueryClient} from '@tanstack/react-query'
-import {useState} from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import api from '../lib/api'
-import {Board} from '../types'
-import {useNavigate} from 'react-router-dom'
-import {Trash2} from 'lucide-react'
+import { Board } from '../types'
+import { useNavigate } from 'react-router-dom'
+import { Trash2 } from 'lucide-react'
+import CreateBoardModal from '../components/CreateBoardModal'
 
 function BoardsPage() {
     const navigate = useNavigate()
-    const [name, setName] = useState('')
+    const [showModal, setShowModal] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
     const queryClient = useQueryClient()
 
-    const {data, isLoading, isError} = useQuery({
+    const { data, isLoading, isError } = useQuery({
         queryKey: ['boards'],
         queryFn: async () => {
             const response = await api.get<Board[]>('/boards')
@@ -20,13 +21,26 @@ function BoardsPage() {
     })
 
     const createBoard = useMutation({
-        mutationFn: async (name: string) => {
-            const response = await api.post<Board>('/boards', {name})
-            return response.data
+        mutationFn: async ({ name, columns }: { name: string, columns: string[] }) => {
+            const boardResponse = await api.post<Board>('/boards', { name })
+            const board = boardResponse.data
+
+            await Promise.all(
+                columns.map((columnName, index) =>
+                    api.post('/column', {
+                        boardId: board.id,
+                        name: columnName,
+                        position: index
+                    })
+                )
+            )
+
+            return board
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['boards']})
-            setName('')
+        onSuccess: (board) => {
+            queryClient.invalidateQueries({ queryKey: ['boards'] })
+            setShowModal(false)
+            navigate(`/boards/${board.id}`)
         }
     })
 
@@ -35,7 +49,7 @@ function BoardsPage() {
             await api.delete(`/boards/${id}`)
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['boards']})
+            queryClient.invalidateQueries({ queryKey: ['boards'] })
             setConfirmDelete(null)
         }
     })
@@ -47,22 +61,13 @@ function BoardsPage() {
         <div className="p-8">
             <h1 className="text-2xl font-bold mb-6">Meus Boards</h1>
 
-            {/* Formulário de criação */}
-            <div className="flex gap-2 mb-8">
-                <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && createBoard.mutate(name)}
-                    placeholder="Nome do board..."
-                    className="border rounded px-3 py-2 w-64"
-                />
+            {/* Botão de criar */}
+            <div className="mb-8">
                 <button
-                    onClick={() => createBoard.mutate(name)}
-                    disabled={!name.trim() || createBoard.isPending}
-                    className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50 cursor-pointer"
+                    onClick={() => setShowModal(true)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-600 transition-colors"
                 >
-                    {createBoard.isPending ? 'Criando...' : 'Criar Board'}
+                    + Criar Board
                 </button>
             </div>
 
@@ -103,12 +108,21 @@ function BoardsPage() {
                                 }}
                                 className="absolute top-2 right-2 bg-red-100 hover:bg-red-500 text-red-500 hover:text-white p-1.5 rounded transition-colors cursor-pointer"
                             >
-                                <Trash2 size={14}/>
+                                <Trash2 size={14} />
                             </button>
                         )}
                     </div>
                 ))}
             </div>
+
+            {/* Modal */}
+            {showModal && (
+                <CreateBoardModal
+                    onClose={() => setShowModal(false)}
+                    onCreate={(name, columns) => createBoard.mutate({ name, columns })}
+                    isLoading={createBoard.isPending}
+                />
+            )}
         </div>
     )
 }
