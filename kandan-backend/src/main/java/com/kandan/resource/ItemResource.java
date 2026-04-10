@@ -15,6 +15,7 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import com.kandan.dto.MoveItemDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -150,5 +151,33 @@ public class ItemResource {
                         i.position,
                         i.createdAt))
                 .toList();
+    }
+
+    @PATCH
+    @Path("/{id}/move")
+    @Transactional
+    @Operation(summary = "Move um item para outra coluna")
+    @APIResponse(responseCode = "200", description = "Item movido com sucesso")
+    @APIResponse(responseCode = "404", description = "Item ou coluna não encontrado")
+    public Response move(@Parameter(description = "ID do item") @PathParam("id") UUID id,
+                         MoveItemDTO dto) {
+        Item item = itemRepository.findById(id);
+        if (item == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        KandanColumn column = kandanColumnRepository.findById(dto.columnId);
+        if (column == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        item.column = column;
+        item.position = dto.position;
+
+        return Response.ok(new ItemDTO(
+                item.id,
+                item.column.id,
+                item.parent != null ? item.parent.id : null,
+                item.title,
+                item.description,
+                item.position,
+                item.createdAt
+        )).build();
     }
 }
